@@ -1,10 +1,6 @@
-// Sources flattened with hardhat v2.6.8 https://hardhat.org
-
-// File contracts/ERC20/IERC20.sol
-
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.5;
+pragma solidity 0.8.10;
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -28,23 +24,4 @@ interface IERC20 {
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-// File contracts/StakingWarmup.sol
-
-contract StakingWarmup {
-    address public immutable staking;
-    address public immutable sWAGMI;
-
-    constructor(address _staking, address _sWAGMI) {
-        require(_staking != address(0));
-        staking = _staking;
-        require(_sWAGMI != address(0));
-        sWAGMI = _sWAGMI;
-    }
-
-    function retrieve(address _staker, uint256 _amount) external {
-        require(msg.sender == staking);
-        IERC20(sWAGMI).transfer(_staker, _amount);
-    }
 }
