@@ -12,7 +12,7 @@ import "./interfaces/IERC20Mintable.sol";
 import "./interfaces/ICCRDERC20.sol";
 import "./interfaces/IBondCalculator.sol";
 
-contract Treasury is Policy, LentTreasury {
+contract Treasury is Policy {
     using CustomSafeMath for uint256;
     using CustomSafeMath for uint32;
     using SafeERC20 for IERC20;
