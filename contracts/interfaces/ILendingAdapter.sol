@@ -9,4 +9,7 @@ interface ILendingAdapter {
   function withdraw(IERC20 _underlyingAsset, uint _amount) external returns (uint);
   function valueOf(IERC20 _underlyingAsset) external returns (uint);
   function claimRewards() external;
+
+  event Lend(IERC20 indexed underlyingAsset, uint amount);
+  event Withdraw(IERC20 indexed underlyingAsset, uint amount);
 }

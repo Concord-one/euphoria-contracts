@@ -63,6 +63,7 @@ contract TranquilLendingAdapter is ILendingAdapter, Policy {
 
     if(errCode == 0) {
       compositeAsset.transfer(msg.sender, _amount);
+      emit Withdraw(_underlyingAsset, _amount);
     }
 
     return errCode;
@@ -79,7 +80,12 @@ contract TranquilLendingAdapter is ILendingAdapter, Policy {
 
     // 2. Lend to the protocol
     compositeAsset.approve(address(this), _amount);
-    return compositeAsset.mint(_amount);
+    uint errCode = compositeAsset.mint(_amount);
+    if(errCode == 0) {
+      emit Lend(_underlyingAsset, _amount);
+    }
+
+    return errCode;
   }
 
   function valueOf(IERC20 _underlyingAsset) external returns (uint) {

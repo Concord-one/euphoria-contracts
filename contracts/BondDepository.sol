@@ -30,7 +30,7 @@ contract BondDepository is Policy {
 
     /* ======== STATE VARIABLES ======== */
 
-    address public immutable WAGMI; // token given as payment for bond
+    address public immutable CCRD; // token given as payment for bond
     address public immutable principle; // token used to create bond
     address public immutable treasury; // mints OHM when receives principle
     address public DAO; // receives profit share from bond
@@ -82,23 +82,27 @@ contract BondDepository is Policy {
     /* ======== INITIALIZATION ======== */
 
     constructor(
-        address _WAGMI,
+        address _CCRD,
         address _principle,
         address _treasury,
         address _DAO,
-        address _bondCalculator
+        address _bondCalculator,
+        bool _isLiquidityBond
     ) {
-        require(_WAGMI != address(0));
-        WAGMI = _WAGMI;
+        require(_CCRD != address(0));
         require(_principle != address(0));
-        principle = _principle;
         require(_treasury != address(0));
-        treasury = _treasury;
         require(_DAO != address(0));
+
+        CCRD = _CCRD;
+        principle = _principle;
+        treasury = _treasury;
         DAO = _DAO;
-        // bondCalculator should be address(0) if not LP bond
+
+        require(_bondCalculator != address(0), "cannot be null");
+
         bondCalculator = _bondCalculator;
-        isLiquidityBond = (_bondCalculator != address(0));
+        isLiquidityBond = _isLiquidityBond;
     }
 
     /**
@@ -264,7 +268,7 @@ contract BondDepository is Policy {
 
         if (fee != 0) {
             // fee is transferred to dao
-            IERC20(WAGMI).safeTransfer(DAO, fee);
+            IERC20(CCRD).safeTransfer(DAO, fee);
         }
 
         // total debt is increased
@@ -334,15 +338,15 @@ contract BondDepository is Policy {
     ) internal returns (uint256) {
         if (!_stake) {
             // if user does not want to stake
-            IERC20(WAGMI).transfer(_recipient, _amount); // send payout
+            IERC20(CCRD).transfer(_recipient, _amount); // send payout
         } else {
             // if user wants to stake
             if (useHelper) {
                 // use if staking warmup is 0
-                IERC20(WAGMI).approve(stakingHelper, _amount);
+                IERC20(CCRD).approve(stakingHelper, _amount);
                 IStaking(stakingHelper).stake(_amount, _recipient);
             } else {
-                IERC20(WAGMI).approve(staking, _amount);
+                IERC20(CCRD).approve(staking, _amount);
                 IStaking(staking).stake(_amount, _recipient);
             }
         }
@@ -387,7 +391,7 @@ contract BondDepository is Policy {
      *  @return uint
      */
     function maxPayout() public view returns (uint256) {
-        return IERC20(WAGMI).totalSupply().mul(terms.maxPayout).div(100000);
+        return IERC20(CCRD).totalSupply().mul(terms.maxPayout).div(100000);
     }
 
     /**
@@ -431,7 +435,7 @@ contract BondDepository is Policy {
         if (isLiquidityBond) {
             price_ = bondPrice().mul(IBondCalculator(bondCalculator).markdown(principle)).div(100);
         } else {
-            price_ = bondPrice().mul(10**IERC20(principle).decimals()).div(100);
+            price_ = bondPrice().mul(IBondCalculator(bondCalculator).valuation(principle, 10 ** IERC20(principle).decimals())).div(100);
         }
     }
 
@@ -440,7 +444,7 @@ contract BondDepository is Policy {
      *  @return debtRatio_ uint
      */
     function debtRatio() public view returns (uint256 debtRatio_) {
-        uint256 supply = IERC20(WAGMI).totalSupply();
+        uint256 supply = IERC20(CCRD).totalSupply();
         debtRatio_ = FixedPoint.fraction(currentDebt().mul(1e9), supply).decode112with18().div(1e18);
     }
 
@@ -516,7 +520,7 @@ contract BondDepository is Policy {
      *  @return bool
      */
     function recoverLostToken(address _token) external returns (bool) {
-        require(_token != WAGMI);
+        require(_token != CCRD);
         require(_token != principle);
         IERC20(_token).safeTransfer(DAO, IERC20(_token).balanceOf(address(this)));
         return true;
